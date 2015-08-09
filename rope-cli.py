@@ -14,12 +14,11 @@ def main():
     argparser.add_argument('fromfile')
     argparser.add_argument('offset', type=int)
     argparser.add_argument('tofile')
+    argparser.add_argument('--force', '-f', action='store_true')
     args = argparser.parse_args()
 
-    print 'rope version: ', rope.VERSION
-
     project = rope.base.project.Project(
-        '.', ropefolder='.testrope')
+        '.', ropefolder='.clirope')
 
     filefrom = rope.base.libutils.path_to_resource(
         project, args.fromfile)
@@ -31,15 +30,12 @@ def main():
 
     project.validate(fileto)
 
-    # renamer = rope.refactor.rename.Rename(project, filea, 5)
-    # changes = renamer.get_changes('do_wop')
-    # print changes.get_description()
-    # project.do(changes)
-
     mover = rope.refactor.move.create_move(project, filefrom, args.offset)
     changes = mover.get_changes(fileto)
-    print changes.get_description()
-    # help(mover)
+    if args.force:
+        project.do(changes)
+    else:
+        print changes.get_description()
 
 
 if __name__ == "__main__":
