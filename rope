@@ -86,7 +86,7 @@ def move_do(args):
 def rename_setup(parser):
     """Rename things."""
     parser.add_argument('PATH')
-    parser.add_argument('OFFSET', type=int)
+    parser.add_argument('OLD_NAME')
     parser.add_argument('NEW_NAME')
     parser.add_argument('--force', '-f', action='store_true')
 
@@ -97,7 +97,14 @@ def rename_do(args):
     resource = project.get_resource(args.PATH)
     project.validate(resource)
 
-    renamer = rope.refactor.rename.Rename(project, resource, args.OFFSET)
+    with open(args.PATH) as f:
+        offset = get_offset_in_file(f, args.OLD_NAME)
+
+    if offset is None:
+        print("error: {} not found in {}".format(args.OLD_NAME, args.PATH))
+        return 2
+
+    renamer = rope.refactor.rename.Rename(project, resource, offset)
     changes = renamer.get_changes(args.NEW_NAME)
 
     if args.force:
@@ -120,6 +127,19 @@ def list_do(args):
 
 
 def print_offsets(file_):
+    for name, offset in yield_name_offsets(file_):
+        print('{offset: >7,} {name}'.format(
+            name=name, offset=offset))
+
+
+def get_offset_in_file(file_, target_name):
+    for name, offset in yield_name_offsets(file_):
+        if name == target_name:
+            return offset
+    return None
+
+
+def yield_name_offsets(file_):
     lines = list(file_)
 
     lines_to_bytes = []
@@ -133,8 +153,7 @@ def print_offsets(file_):
     for item in yield_module_items(text):
         name, line, col = item
         offset = lines_to_bytes[line - 1] + col
-        print('{offset: >7,} {name}'.format(
-            name=name, offset=offset))
+        yield name, offset
 
 
 def yield_module_items(s):
