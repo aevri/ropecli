@@ -2,6 +2,7 @@
 """A command-line tool for refactoring Python programs."""
 
 import argparse
+import ast
 import sys
 
 import rope
@@ -31,6 +32,8 @@ def main():
     # pylint: enable=pointless-statement
 
     _setup_parser_for_funcs(subparsers, 'move', move_setup, move_do)
+    _setup_parser_for_funcs(subparsers, 'rename', rename_setup, rename_do)
+    _setup_parser_for_funcs(subparsers, 'list', list_setup, list_do)
 
     args = parser.parse_args()
     return args.func(args)
@@ -78,6 +81,76 @@ def move_do(args):
         project.do(changes)
     else:
         print(changes.get_description())
+
+
+def rename_setup(parser):
+    """Rename things."""
+    parser.add_argument('PATH')
+    parser.add_argument('OFFSET', type=int)
+    parser.add_argument('NEW_NAME')
+    parser.add_argument('--force', '-f', action='store_true')
+
+
+def rename_do(args):
+    project = rope.base.project.Project('.', ropefolder='.clirope')
+
+    resource = project.get_resource(args.PATH)
+    project.validate(resource)
+
+    renamer = rope.refactor.rename.Rename(project, resource, args.OFFSET)
+    changes = renamer.get_changes(args.NEW_NAME)
+
+    if args.force:
+        project.do(changes)
+    else:
+        print(changes.get_description())
+
+
+def list_setup(parser):
+    """List entities in a file."""
+    parser.add_argument('PATH')
+
+
+def list_do(args):
+    project = rope.base.project.Project('.', ropefolder='.clirope')
+    resource = project.get_resource(args.PATH)
+    project.validate(resource)
+    with open(args.PATH) as f:
+        print_offsets(f)
+
+
+def print_offsets(file_):
+    lines = list(file_)
+
+    lines_to_bytes = []
+    acc = 0
+    for line in lines:
+        lines_to_bytes.append(acc)
+        acc += len(line)
+
+    text = ''.join(lines)
+
+    for item in yield_module_items(text):
+        name, line, col = item
+        offset = lines_to_bytes[line - 1] + col
+        print('{offset: >7,} {name}'.format(
+            name=name, offset=offset))
+
+
+def yield_module_items(s):
+    module = ast.parse(s)
+    for c in ast.iter_child_nodes(module):
+        fields = dict(ast.iter_fields(c))
+        if isinstance(c, ast.FunctionDef):
+            yield c.name, c.lineno, c.col_offset + len('def ')
+        elif isinstance(c, ast.ClassDef):
+            yield c.name, c.lineno, c.col_offset + len('class ')
+            for member in fields["body"]:
+                if isinstance(member, ast.FunctionDef):
+                    mname = '.'.join([c.name, member.name])
+                    yield mname, member.lineno, member.col_offset + len('def ')
+        elif isinstance(c, ast.Assign):
+            yield c
 
 
 if __name__ == "__main__":
