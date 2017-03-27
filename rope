@@ -104,8 +104,11 @@ def rename_do(args):
         print("error: {} not found in {}".format(args.OLD_NAME, args.PATH))
         return 2
 
+    def very_sure(_):
+        return True
+
     renamer = rope.refactor.rename.Rename(project, resource, offset)
-    changes = renamer.get_changes(args.NEW_NAME)
+    changes = renamer.get_changes(args.NEW_NAME, docs=True, unsure=very_sure)
 
     if args.force:
         project.do(changes)
