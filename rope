@@ -1,7 +1,8 @@
+#! /usr/bin/env python3
+
 import argparse
 import sys
 
-sys.path.append('/home/angelos/repos/rope')
 import rope
 import rope.base.project
 import rope.base.libutils
@@ -35,7 +36,7 @@ def main():
     if args.force:
         project.do(changes)
     else:
-        print changes.get_description()
+        print(changes.get_description())
 
 
 if __name__ == "__main__":
