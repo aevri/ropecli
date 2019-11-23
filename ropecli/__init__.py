@@ -60,7 +60,6 @@ def move_setup(parser):
     """Move items between modules."""
     parser.add_argument('source')
     parser.add_argument('target_file')
-    parser.add_argument('--force', '-f', action='store_true')
 
 
 def move_do(args):
@@ -84,10 +83,7 @@ def move_do(args):
 
     mover = rope.refactor.move.create_move(project, filefrom, offset)
     changes = mover.get_changes(fileto)
-    if args.force:
-        project.do(changes)
-    else:
-        print(changes.get_description())
+    project.do(changes)
 
 
 def rename_setup(parser):
@@ -95,7 +91,6 @@ def rename_setup(parser):
     parser.add_argument('PATH')
     parser.add_argument('OLD_NAME')
     parser.add_argument('NEW_NAME')
-    parser.add_argument('--force', '-f', action='store_true')
 
 
 def rename_do(args):
@@ -117,10 +112,7 @@ def rename_do(args):
     renamer = rope.refactor.rename.Rename(project, resource, offset)
     changes = renamer.get_changes(args.NEW_NAME, docs=True, unsure=very_sure)
 
-    if args.force:
-        project.do(changes)
-    else:
-        print(changes.get_description())
+    project.do(changes)
 
 
 def list_setup(parser):
@@ -140,7 +132,6 @@ def usefunction_setup(parser):
     """Try to use a function where possible."""
     parser.add_argument('PATH')
     parser.add_argument('NAME')
-    parser.add_argument('--force', '-f', action='store_true')
 
 
 def usefunction_do(args):
@@ -159,10 +150,7 @@ def usefunction_do(args):
     user = rope.refactor.usefunction.UseFunction(project, resource, offset)
     changes = user.get_changes()
 
-    if args.force:
-        project.do(changes)
-    else:
-        print(changes.get_description())
+    project.do(changes)
 
 
 def print_offsets(file_):
