@@ -35,8 +35,6 @@ def main():
     _setup_parser_for_funcs(subparsers, 'move', move_setup, move_do)
     _setup_parser_for_funcs(subparsers, 'rename', rename_setup, rename_do)
     _setup_parser_for_funcs(subparsers, 'list', list_setup, list_do)
-    _setup_parser_for_funcs(
-        subparsers, 'usefunction', usefunction_setup, usefunction_do)
 
     args = parser.parse_args()
     return args.func(args)
@@ -126,31 +124,6 @@ def list_do(args):
     project.validate(resource)
     with open(args.PATH) as f:
         print_offsets(f)
-
-
-def usefunction_setup(parser):
-    """Try to use a function where possible."""
-    parser.add_argument('PATH')
-    parser.add_argument('NAME')
-
-
-def usefunction_do(args):
-    project = rope.base.project.Project('.', ropefolder='.clirope')
-
-    resource = project.get_resource(args.PATH)
-    project.validate(resource)
-
-    with open(args.PATH) as f:
-        offset = get_offset_in_file(f, args.NAME)
-
-    if offset is None:
-        print("error: {} not found in {}".format(args.NAME, args.PATH))
-        return 2
-
-    user = rope.refactor.usefunction.UseFunction(project, resource, offset)
-    changes = user.get_changes()
-
-    project.do(changes)
 
 
 def print_offsets(file_):
