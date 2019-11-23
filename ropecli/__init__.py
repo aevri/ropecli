@@ -58,9 +58,8 @@ def _setup_parser_for_funcs(subparsers, name, setup_func, do_func):
 
 def move_setup(parser):
     """Move items between modules."""
-    parser.add_argument('fromfile')
-    parser.add_argument('offset', type=int)
-    parser.add_argument('tofile')
+    parser.add_argument('source')
+    parser.add_argument('target_file')
     parser.add_argument('--force', '-f', action='store_true')
 
 
@@ -68,17 +67,22 @@ def move_do(args):
     project = rope.base.project.Project(
         '.', ropefolder='.clirope')
 
+    filefrom_path, module_item = args.source.split("::")
+
     filefrom = rope.base.libutils.path_to_resource(
-        project, args.fromfile)
+        project, filefrom_path)
 
     project.validate(filefrom)
 
     fileto = rope.base.libutils.path_to_resource(
-        project, args.tofile)
+        project, args.target_file)
 
     project.validate(fileto)
 
-    mover = rope.refactor.move.create_move(project, filefrom, args.offset)
+    with open(filefrom_path) as f:
+        offset = get_offset_in_file(f, module_item)
+
+    mover = rope.refactor.move.create_move(project, filefrom, offset)
     changes = mover.get_changes(fileto)
     if args.force:
         project.do(changes)
