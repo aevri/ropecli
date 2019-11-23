@@ -1,2 +1,5 @@
 .ropeproject/
 *.pyc
+tags
+.clirope/
+rope_cli.egg-info/
