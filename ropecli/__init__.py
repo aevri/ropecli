@@ -35,6 +35,13 @@ def main():
 @main.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
 def froms_to_imports(path):
+    """Change the 'from X import Y' statements in PATH to 'import X.Y'.
+
+    e.g.
+
+      rope froms-to-imports mypackage/mymodule.py
+
+    """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     resource = project.get_resource(path)
@@ -50,6 +57,11 @@ def froms_to_imports(path):
 @main.command(name="list")
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
 def list_command(path):
+    """List the global entities in PATH.
+
+    This will show things that might be used as arguments in invocations of
+    other commands.
+    """
     # Note that if we called this function 'list', it would collide with the
     # built-in.
     project = rope.base.project.Project(".", ropefolder=".clirope")
@@ -63,6 +75,15 @@ def list_command(path):
 @click.argument("source")
 @click.argument("target_file", type=click.Path(exists=True, dir_okay=False))
 def move(source, target_file):
+    """Move the global entry SOURCE to the TARGET_FILE.
+
+    All references to the entry will be adjusted to refer to the new location.
+
+    e.g.
+
+      rope move modulea.py::MyClass moduleb.py
+
+    """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     filefrom, offset = resourcespec_to_resource_offset(project, source)
@@ -94,6 +115,16 @@ def resourcespec_to_resource_offset(project, resourcespec):
 @main.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
 def organize_imports(path):
+    """Organize the import statements in PATH in an opinionated way.
+
+    In particular; unused or duplicate imports will be dropped, imports will be
+    sorted and grouped, and the standard import group will appear first.
+
+    e.g.
+
+      rope organize_imports mypackage/mymodule.py
+
+    """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     resource = project.get_resource(path)
@@ -111,6 +142,16 @@ def organize_imports(path):
 @click.argument("old_name")
 @click.argument("new_name")
 def rename(path, old_name, new_name):
+    """Rename the global entry OLD_NAME in PATH to NEW_NAME.
+
+    All references to the entry will be adjusted to refer to the new name,
+    including in documentation.
+
+    e.g.
+
+      rope rename modulea.py MyClass MyAwesomeClass
+
+    """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     resource = project.get_resource(path)
