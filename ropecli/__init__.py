@@ -33,6 +33,33 @@ def main():
 
 
 @main.command()
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+def froms_to_imports(path):
+    project = rope.base.project.Project(".", ropefolder=".clirope")
+
+    resource = project.get_resource(path)
+    pymodule = project.get_pymodule(resource)
+    project.validate(resource)
+
+    tools = rope.refactor.importutils.ImportTools(project)
+    new_content = tools.froms_to_imports(pymodule)
+
+    pathlib.Path(path).write_text(new_content)
+
+
+@main.command(name="list")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+def list_command(path):
+    # Note that if we called this function 'list', it would collide with the
+    # built-in.
+    project = rope.base.project.Project(".", ropefolder=".clirope")
+    resource = project.get_resource(path)
+    project.validate(resource)
+    with open(path) as f:
+        print_offsets(f)
+
+
+@main.command()
 @click.argument("source")
 @click.argument("target_file", type=click.Path(exists=True, dir_okay=False))
 def move(source, target_file):
@@ -66,6 +93,21 @@ def resourcespec_to_resource_offset(project, resourcespec):
 
 @main.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
+def organize_imports(path):
+    project = rope.base.project.Project(".", ropefolder=".clirope")
+
+    resource = project.get_resource(path)
+    pymodule = project.get_pymodule(resource)
+    project.validate(resource)
+
+    tools = rope.refactor.importutils.ImportTools(project)
+    new_content = tools.organize_imports(pymodule)
+
+    pathlib.Path(path).write_text(new_content)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
 @click.argument("old_name")
 @click.argument("new_name")
 def rename(path, old_name, new_name):
@@ -87,48 +129,6 @@ def rename(path, old_name, new_name):
     changes = renamer.get_changes(new_name, docs=True, unsure=very_sure)
 
     project.do(changes)
-
-
-@main.command(name="list")
-@click.argument("path", type=click.Path(exists=True, dir_okay=False))
-def list_command(path):
-    # Note that if we called this function 'list', it would collide with the
-    # built-in.
-    project = rope.base.project.Project(".", ropefolder=".clirope")
-    resource = project.get_resource(path)
-    project.validate(resource)
-    with open(path) as f:
-        print_offsets(f)
-
-
-@main.command()
-@click.argument("path", type=click.Path(exists=True, dir_okay=False))
-def organize_imports(path):
-    project = rope.base.project.Project(".", ropefolder=".clirope")
-
-    resource = project.get_resource(path)
-    pymodule = project.get_pymodule(resource)
-    project.validate(resource)
-
-    tools = rope.refactor.importutils.ImportTools(project)
-    new_content = tools.organize_imports(pymodule)
-
-    pathlib.Path(path).write_text(new_content)
-
-
-@main.command()
-@click.argument("path", type=click.Path(exists=True, dir_okay=False))
-def froms_to_imports(path):
-    project = rope.base.project.Project(".", ropefolder=".clirope")
-
-    resource = project.get_resource(path)
-    pymodule = project.get_pymodule(resource)
-    project.validate(resource)
-
-    tools = rope.refactor.importutils.ImportTools(project)
-    new_content = tools.froms_to_imports(pymodule)
-
-    pathlib.Path(path).write_text(new_content)
 
 
 def print_offsets(file_):
