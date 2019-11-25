@@ -24,6 +24,11 @@ import rope.refactor.rename
 
 @click.group()
 def main():
+    """A refactoring tool for Python programs.
+
+    Built on the excellent 'rope' refactoring library, which powers the
+    refactoring capabilities of a number of IDEs.
+    """
     pass
 
 
