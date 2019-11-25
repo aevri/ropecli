@@ -128,7 +128,7 @@ def get_offset_in_file(file_, target_name):
     for name, offset in yield_name_offsets(file_):
         if name == target_name:
             return offset
-    return None
+    raise KeyError(f"'{target_name}' does not exist in the supplied file.")
 
 
 def yield_name_offsets(file_):
