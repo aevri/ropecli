@@ -15,6 +15,7 @@ setuptools.setup(
         ]
     },
     install_requires=[
+        'click',
         'rope',
     ],
     python_requires='>=3.6',

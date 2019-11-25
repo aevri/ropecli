@@ -5,6 +5,8 @@ import argparse
 import ast
 import sys
 
+import click
+
 import rope
 import rope.base.project
 import rope.base.libutils
@@ -13,58 +15,19 @@ import rope.refactor.move
 import rope.refactor.usefunction
 
 
+@click.group()
 def main():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=__doc__)
-
-    subparsers = parser.add_subparsers()
-
-    # Work around a bug in argparse with subparsers no longer being required:
-    # http://bugs.python.org/issue9253#msg186387
-    subparsers.required = True
-    subparsers.dest = 'command'
-
-    # vulture will report these as unused unless we do this
-    #
-    # pylint: disable=pointless-statement
-    subparsers.required
-    subparsers.dest
-    # pylint: enable=pointless-statement
-
-    _setup_parser_for_funcs(subparsers, 'move', move_setup, move_do)
-    _setup_parser_for_funcs(subparsers, 'rename', rename_setup, rename_do)
-    _setup_parser_for_funcs(subparsers, 'list', list_setup, list_do)
-
-    args = parser.parse_args()
-    return args.func(args)
+    pass
 
 
-def _setup_parser_for_funcs(subparsers, name, setup_func, do_func):
-    doc = setup_func.__doc__
-    doc_subject = doc.splitlines()[0]
-    doc_epilog = '\n'.join(doc.splitlines()[1:])
-    parser = subparsers.add_parser(
-        name,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        help=doc_subject,
-        description=doc_subject,
-        epilog=doc_epilog)
-    setup_func(parser)
-    parser.set_defaults(func=do_func)
-
-
-def move_setup(parser):
-    """Move items between modules."""
-    parser.add_argument('source')
-    parser.add_argument('target_file')
-
-
-def move_do(args):
+@main.command()
+@click.argument('source')
+@click.argument('target_file', type=click.Path(exists=True, dir_okay=False))
+def move(source, target_file):
     project = rope.base.project.Project(
         '.', ropefolder='.clirope')
 
-    filefrom_path, module_item = args.source.split("::")
+    filefrom_path, module_item = source.split("::")
 
     filefrom = rope.base.libutils.path_to_resource(
         project, filefrom_path)
@@ -72,7 +35,7 @@ def move_do(args):
     project.validate(filefrom)
 
     fileto = rope.base.libutils.path_to_resource(
-        project, args.target_file)
+        project, target_file)
 
     project.validate(fileto)
 
@@ -84,45 +47,41 @@ def move_do(args):
     project.do(changes)
 
 
-def rename_setup(parser):
-    """Rename things."""
-    parser.add_argument('PATH')
-    parser.add_argument('OLD_NAME')
-    parser.add_argument('NEW_NAME')
-
-
-def rename_do(args):
+@main.command()
+@click.argument('path', type=click.Path(exists=True, dir_okay=False))
+@click.argument('old_name')
+@click.argument('new_name')
+def rename(path, old_name, new_name):
     project = rope.base.project.Project('.', ropefolder='.clirope')
 
-    resource = project.get_resource(args.PATH)
+    resource = project.get_resource(path)
     project.validate(resource)
 
-    with open(args.PATH) as f:
-        offset = get_offset_in_file(f, args.OLD_NAME)
+    with open(path) as f:
+        offset = get_offset_in_file(f, old_name)
 
     if offset is None:
-        print("error: {} not found in {}".format(args.OLD_NAME, args.PATH))
+        print("error: {} not found in {}".format(old_name, path))
         return 2
 
     def very_sure(_):
         return True
 
     renamer = rope.refactor.rename.Rename(project, resource, offset)
-    changes = renamer.get_changes(args.NEW_NAME, docs=True, unsure=very_sure)
+    changes = renamer.get_changes(new_name, docs=True, unsure=very_sure)
 
     project.do(changes)
 
 
-def list_setup(parser):
-    """List entities in a file."""
-    parser.add_argument('PATH')
-
-
-def list_do(args):
+@main.command(name="list")
+@click.argument('path', type=click.Path(exists=True, dir_okay=False))
+def list_command(path):
+    # Note that if we called this function 'list', it would collide with the
+    # built-in.
     project = rope.base.project.Project('.', ropefolder='.clirope')
-    resource = project.get_resource(args.PATH)
+    resource = project.get_resource(path)
     project.validate(resource)
-    with open(args.PATH) as f:
+    with open(path) as f:
         print_offsets(f)
 
 
@@ -170,7 +129,3 @@ def yield_module_items(s):
                     yield mname, member.lineno, member.col_offset + len('def ')
         elif isinstance(c, ast.Assign):
             yield c
-
-
-if __name__ == "__main__":
-    sys.exit(main())
