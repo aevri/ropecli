@@ -4,6 +4,7 @@
 import ast
 import fnmatch
 import pathlib
+import sys
 
 import click
 import rope.base.libutils
@@ -80,7 +81,13 @@ def list_command(path):
     default=True,
     help="Apply globbing to the second part of 'source'.",
 )
-def move(source, target_file, glob):
+@click.option(
+    "--exclude",
+    "-e",
+    help="Exclude this from list of sources, can be specified multiple times. Globbing rules apply.",
+    multiple=True,
+)
+def move(source, target_file, glob, exclude):
     """Move the global entry SOURCE to the TARGET_FILE.
 
     All references to the entry will be adjusted to refer to the new location.
@@ -95,12 +102,30 @@ def move(source, target_file, glob):
       # Move all things that start with "Thingy" from modulea.py to thingy.py
       rope move modulea.py::Thingy* thingy.py
 
+      \b
+      # Move all things that start with "Thingy" from modulea.py to thingy.py,
+      # except for "ThingyB":
+      rope move modulea.py::Thingy* thingy.py --exclude *::ThingyB
+
     """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     source_list = [source]
     if glob:
         source_list = list(glob_resourcespec(source))
+
+    for pattern in exclude:
+        old_source_list = source_list
+        source_list = []
+        for current_source in old_source_list:
+            if fnmatch.fnmatchcase(current_source, pattern):
+                continue
+            source_list.append(current_source)
+        if len(old_source_list) == len(source_list):
+            click.echo(
+                f"Warning: exclude pattern '{pattern}' didn't match anything.",
+                err=True,
+            )
 
     for current_source in source_list:
         filefrom, offset = resourcespec_to_resource_offset(
