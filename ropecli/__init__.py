@@ -21,21 +21,18 @@ def main():
 
 
 @main.command()
-@click.argument('source')
-@click.argument('target_file', type=click.Path(exists=True, dir_okay=False))
+@click.argument("source")
+@click.argument("target_file", type=click.Path(exists=True, dir_okay=False))
 def move(source, target_file):
-    project = rope.base.project.Project(
-        '.', ropefolder='.clirope')
+    project = rope.base.project.Project(".", ropefolder=".clirope")
 
     filefrom_path, module_item = source.split("::")
 
-    filefrom = rope.base.libutils.path_to_resource(
-        project, filefrom_path)
+    filefrom = rope.base.libutils.path_to_resource(project, filefrom_path)
 
     project.validate(filefrom)
 
-    fileto = rope.base.libutils.path_to_resource(
-        project, target_file)
+    fileto = rope.base.libutils.path_to_resource(project, target_file)
 
     project.validate(fileto)
 
@@ -48,11 +45,11 @@ def move(source, target_file):
 
 
 @main.command()
-@click.argument('path', type=click.Path(exists=True, dir_okay=False))
-@click.argument('old_name')
-@click.argument('new_name')
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.argument("old_name")
+@click.argument("new_name")
 def rename(path, old_name, new_name):
-    project = rope.base.project.Project('.', ropefolder='.clirope')
+    project = rope.base.project.Project(".", ropefolder=".clirope")
 
     resource = project.get_resource(path)
     project.validate(resource)
@@ -74,11 +71,11 @@ def rename(path, old_name, new_name):
 
 
 @main.command(name="list")
-@click.argument('path', type=click.Path(exists=True, dir_okay=False))
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
 def list_command(path):
     # Note that if we called this function 'list', it would collide with the
     # built-in.
-    project = rope.base.project.Project('.', ropefolder='.clirope')
+    project = rope.base.project.Project(".", ropefolder=".clirope")
     resource = project.get_resource(path)
     project.validate(resource)
     with open(path) as f:
@@ -87,8 +84,7 @@ def list_command(path):
 
 def print_offsets(file_):
     for name, offset in yield_name_offsets(file_):
-        print('{offset: >7,} {name}'.format(
-            name=name, offset=offset))
+        print("{offset: >7,} {name}".format(name=name, offset=offset))
 
 
 def get_offset_in_file(file_, target_name):
@@ -107,7 +103,7 @@ def yield_name_offsets(file_):
         lines_to_bytes.append(acc)
         acc += len(line)
 
-    text = ''.join(lines)
+    text = "".join(lines)
 
     for item in yield_module_items(text):
         name, line, col = item
@@ -120,12 +116,12 @@ def yield_module_items(s):
     for c in ast.iter_child_nodes(module):
         fields = dict(ast.iter_fields(c))
         if isinstance(c, ast.FunctionDef):
-            yield c.name, c.lineno, c.col_offset + len('def ')
+            yield c.name, c.lineno, c.col_offset + len("def ")
         elif isinstance(c, ast.ClassDef):
-            yield c.name, c.lineno, c.col_offset + len('class ')
+            yield c.name, c.lineno, c.col_offset + len("class ")
             for member in fields["body"]:
                 if isinstance(member, ast.FunctionDef):
-                    mname = '.'.join([c.name, member.name])
-                    yield mname, member.lineno, member.col_offset + len('def ')
+                    mname = ".".join([c.name, member.name])
+                    yield mname, member.lineno, member.col_offset + len("def ")
         elif isinstance(c, ast.Assign):
             yield c
