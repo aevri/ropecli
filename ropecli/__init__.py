@@ -3,6 +3,7 @@
 
 import argparse
 import ast
+import pathlib
 import sys
 
 import click
@@ -13,6 +14,16 @@ import rope.base.libutils
 import rope.refactor.rename
 import rope.refactor.move
 import rope.refactor.usefunction
+import rope.refactor.importutils
+
+# Note that we can easily support the following import refactors, along the
+# lines of 'organize_imports' and 'froms_to_imports':
+#
+#  o: expand_stars
+#  o: handle_long_imports
+#  o: relatives_to_absolutes
+#  o: sort_imports
+#
 
 
 @click.group()
@@ -80,6 +91,36 @@ def list_command(path):
     project.validate(resource)
     with open(path) as f:
         print_offsets(f)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+def organize_imports(path):
+    project = rope.base.project.Project(".", ropefolder=".clirope")
+
+    resource = project.get_resource(path)
+    pymodule = project.get_pymodule(resource)
+    project.validate(resource)
+
+    tools = rope.refactor.importutils.ImportTools(project)
+    new_content = tools.organize_imports(pymodule)
+
+    pathlib.Path(path).write_text(new_content)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+def froms_to_imports(path):
+    project = rope.base.project.Project(".", ropefolder=".clirope")
+
+    resource = project.get_resource(path)
+    pymodule = project.get_pymodule(resource)
+    project.validate(resource)
+
+    tools = rope.refactor.importutils.ImportTools(project)
+    new_content = tools.froms_to_imports(pymodule)
+
+    pathlib.Path(path).write_text(new_content)
 
 
 def print_offsets(file_):
