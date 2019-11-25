@@ -127,16 +127,26 @@ def move(source, target_file, glob, exclude):
                 err=True,
             )
 
-    for current_source in source_list:
-        filefrom, offset = resourcespec_to_resource_offset(
-            project, current_source
-        )
+    if not source_list:
+        click.echo("Nothing to do.", err=True)
+    elif len(source_list) == 1:
+        do_move(project, source_list[0], target_file)
+    else:
+        with click.progressbar(
+            source_list, file=sys.stderr, item_show_func=str
+        ) as bar:
+            for current_source in bar:
+                do_move(project, current_source, target_file)
 
-        fileto = project.get_resource(target_file)
 
-        mover = rope.refactor.move.create_move(project, filefrom, offset)
-        changes = mover.get_changes(fileto)
-        project.do(changes)
+def do_move(project, source, target_file):
+    filefrom, offset = resourcespec_to_resource_offset(project, source)
+
+    fileto = project.get_resource(target_file)
+
+    mover = rope.refactor.move.create_move(project, filefrom, offset)
+    changes = mover.get_changes(fileto)
+    project.do(changes)
 
 
 def resourcespec_to_resource_offset(project, resourcespec):
