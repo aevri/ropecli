@@ -1,20 +1,16 @@
 #! /usr/bin/env python3
 """A command-line tool for refactoring Python programs."""
 
-import argparse
 import ast
 import pathlib
-import sys
 
 import click
-
-import rope
-import rope.base.project
 import rope.base.libutils
-import rope.refactor.rename
-import rope.refactor.move
-import rope.refactor.usefunction
+import rope.base.project
 import rope.refactor.importutils
+import rope.refactor.move
+import rope.refactor.rename
+
 
 # Note that we can easily support the following import refactors, along the
 # lines of 'organize_imports' and 'froms_to_imports':
