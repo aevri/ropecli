@@ -33,22 +33,32 @@ def main():
 def move(source, target_file):
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
-    filefrom_path, module_item = source.split("::")
-
-    filefrom = rope.base.libutils.path_to_resource(project, filefrom_path)
-
-    project.validate(filefrom)
+    filefrom, offset = resourcespec_to_resource_offset(project, source)
 
     fileto = rope.base.libutils.path_to_resource(project, target_file)
-
     project.validate(fileto)
-
-    with open(filefrom_path) as f:
-        offset = get_offset_in_file(f, module_item)
 
     mover = rope.refactor.move.create_move(project, filefrom, offset)
     changes = mover.get_changes(fileto)
     project.do(changes)
+
+
+def resourcespec_to_resource_offset(project, resourcespec):
+    if "::" in resourcespec:
+        file_path, module_item = resourcespec.split("::")
+    else:
+        file_path = resourcespec
+        module_item = None
+    file_resource = rope.base.libutils.path_to_resource(project, file_path)
+    project.validate(file_resource)
+
+    if module_item is not None:
+        with open(file_path) as f:
+            offset = get_offset_in_file(f, module_item)
+    else:
+        offset = None
+
+    return file_resource, offset
 
 
 @main.command()
