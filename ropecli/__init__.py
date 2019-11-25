@@ -2,6 +2,7 @@
 """A command-line tool for refactoring Python programs."""
 
 import ast
+import fnmatch
 import pathlib
 
 import click
@@ -74,25 +75,43 @@ def list_command(path):
 @main.command()
 @click.argument("source")
 @click.argument("target_file", type=click.Path(exists=True, dir_okay=False))
-def move(source, target_file):
+@click.option(
+    "--glob/--no-glob",
+    default=True,
+    help="Apply globbing to the second part of 'source'.",
+)
+def move(source, target_file, glob):
     """Move the global entry SOURCE to the TARGET_FILE.
 
     All references to the entry will be adjusted to refer to the new location.
 
     e.g.
 
+      \b
+      # Move "MyClass" from modulea.py to moduleb.py
       rope move modulea.py::MyClass moduleb.py
+
+      \b
+      # Move all things that start with "Thingy" from modulea.py to thingy.py
+      rope move modulea.py::Thingy* thingy.py
 
     """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
-    filefrom, offset = resourcespec_to_resource_offset(project, source)
+    source_list = [source]
+    if glob:
+        source_list = list(glob_resourcespec(source))
 
-    fileto = project.get_resource(target_file)
+    for current_source in source_list:
+        filefrom, offset = resourcespec_to_resource_offset(
+            project, current_source
+        )
 
-    mover = rope.refactor.move.create_move(project, filefrom, offset)
-    changes = mover.get_changes(fileto)
-    project.do(changes)
+        fileto = project.get_resource(target_file)
+
+        mover = rope.refactor.move.create_move(project, filefrom, offset)
+        changes = mover.get_changes(fileto)
+        project.do(changes)
 
 
 def resourcespec_to_resource_offset(project, resourcespec):
@@ -110,6 +129,15 @@ def resourcespec_to_resource_offset(project, resourcespec):
         offset = None
 
     return file_resource, offset
+
+
+def glob_resourcespec(resourcespec):
+    if "::" not in resourcespec:
+        raise ValueError(f"'{resourcespec}' does not contain '::'")
+    file_path, pattern = resourcespec.split("::")
+    for name in yield_module_path_itemnames(file_path, only_toplevel=True):
+        if fnmatch.fnmatchcase(name, pattern):
+            yield f"{file_path}::{name}"
 
 
 @main.command()
@@ -201,7 +229,13 @@ def yield_name_offsets(file_):
         yield name, offset
 
 
-def yield_module_items(s):
+def yield_module_path_itemnames(file_path, only_toplevel=False):
+    text = pathlib.Path(file_path).read_text()
+    for name, _, _ in yield_module_items(text, only_toplevel):
+        yield name
+
+
+def yield_module_items(s, only_toplevel=False):
     module = ast.parse(s)
     for c in ast.iter_child_nodes(module):
         fields = dict(ast.iter_fields(c))
@@ -209,6 +243,8 @@ def yield_module_items(s):
             yield c.name, c.lineno, c.col_offset + len("def ")
         elif isinstance(c, ast.ClassDef):
             yield c.name, c.lineno, c.col_offset + len("class ")
+            if only_toplevel:
+                continue
             for member in fields["body"]:
                 if isinstance(member, ast.FunctionDef):
                     mname = ".".join([c.name, member.name])
