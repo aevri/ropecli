@@ -35,8 +35,7 @@ def move(source, target_file):
 
     filefrom, offset = resourcespec_to_resource_offset(project, source)
 
-    fileto = rope.base.libutils.path_to_resource(project, target_file)
-    project.validate(fileto)
+    fileto = project.get_resource(target_file)
 
     mover = rope.refactor.move.create_move(project, filefrom, offset)
     changes = mover.get_changes(fileto)
@@ -49,8 +48,7 @@ def resourcespec_to_resource_offset(project, resourcespec):
     else:
         file_path = resourcespec
         module_item = None
-    file_resource = rope.base.libutils.path_to_resource(project, file_path)
-    project.validate(file_resource)
+    file_resource = project.get_resource(file_path)
 
     if module_item is not None:
         with open(file_path) as f:
@@ -69,7 +67,6 @@ def rename(path, old_name, new_name):
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
     resource = project.get_resource(path)
-    project.validate(resource)
 
     with open(path) as f:
         offset = get_offset_in_file(f, old_name)
