@@ -23,6 +23,9 @@ import rope.refactor.rename
 #  o: sort_imports
 #
 
+# We can sort of implement command aliases in Click like so:
+# https://stackoverflow.com/questions/46641928/python-click-multiple-command-names
+
 
 @click.group()
 def main():
