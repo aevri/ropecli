@@ -18,5 +18,10 @@ setuptools.setup(
         'click',
         'rope',
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+        ]
+    },
     python_requires='>=3.6',
 )
