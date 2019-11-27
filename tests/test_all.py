@@ -39,7 +39,6 @@ def make_veg_fruit_pyfiles():
 
 def run(runner, *args):
     str_args = [str(a) for a in args]
-    print(str_args)
     result = runner.invoke(ropecli.main, str_args)
     print(result.stdout)
     # It seems that the "mix_stderr" parameter to CliRunner() is not working as
