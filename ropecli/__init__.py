@@ -204,30 +204,26 @@ def organize_imports(path):
 
 
 @main.command()
-@click.argument("path", type=click.Path(exists=True, dir_okay=False))
-@click.argument("old_name")
+@click.argument("target")
 @click.argument("new_name")
-def rename(path, old_name, new_name):
-    """Rename the global entry OLD_NAME in PATH to NEW_NAME.
+def rename(target, new_name):
+    """Rename the global entry TARGET to NEW_NAME.
 
     All references to the entry will be adjusted to refer to the new name,
     including in documentation.
 
     e.g.
 
-      rope rename modulea.py MyClass MyAwesomeClass
+      rope rename modulea.py::MyClass MyAwesomeClass
+
+    or
+
+      rope rename modulea.py moduleb
 
     """
     project = rope.base.project.Project(".", ropefolder=".clirope")
 
-    resource = project.get_resource(path)
-
-    with open(path) as f:
-        offset = get_offset_in_file(f, old_name)
-
-    if offset is None:
-        print("error: {} not found in {}".format(old_name, path))
-        return 2
+    resource, offset = resourcespec_to_resource_offset(project, target)
 
     def very_sure(_):
         return True

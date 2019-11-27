@@ -106,9 +106,20 @@ def test_rename_simple():
         veg, fruit = make_veg_fruit_pyfiles()
         assert "def tomafingers()" not in veg.read_text()
         assert "    tomafingers()" not in veg.read_text()
-        run(runner, "rename", veg, "tomatoes", "tomafingers")
+        run(runner, "rename", f"{veg}::tomatoes", "tomafingers")
         assert "def tomafingers()" in veg.read_text()
         assert "    tomafingers()" in veg.read_text()
+
+
+def test_rename_module():
+    runner = click.testing.CliRunner()
+    with runner.isolated_filesystem():
+        veg, fruit = make_veg_fruit_pyfiles()
+        run(runner, "move", f"{veg}::tomatoes", fruit)
+        run(runner, "rename", fruit, "fruity")
+        assert "fruity.tomatoes()" in veg.read_text()
+        assert not fruit.exists()
+        assert pathlib.Path("fruity.py").exists()
 
 
 # -----------------------------------------------------------------------------
