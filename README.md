@@ -19,7 +19,7 @@ Installation
 ------------
 
 ```
-pip install https://github.com/aevri/ropecli.git
+pip install git+https://github.com/aevri/ropecli.git
 ```
 
 Summary
