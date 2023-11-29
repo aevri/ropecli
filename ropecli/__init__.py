@@ -206,7 +206,8 @@ def organize_imports(path):
 @main.command()
 @click.argument("target")
 @click.argument("new_name")
-def rename(target, new_name):
+@click.option("--dry/--no-dry", default=False)
+def rename(target, new_name, dry):
     """Rename the global entry TARGET to NEW_NAME.
 
     All references to the entry will be adjusted to refer to the new name,
@@ -231,7 +232,10 @@ def rename(target, new_name):
     renamer = rope.refactor.rename.Rename(project, resource, offset)
     changes = renamer.get_changes(new_name, docs=True, unsure=very_sure)
 
-    project.do(changes)
+    if dry:
+        print(changes.get_description())
+    else:
+        project.do(changes)
 
 
 def print_offsets(file_):
