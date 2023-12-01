@@ -141,12 +141,12 @@ def test_rename_module__dry():
         veg, fruit = make_veg_fruit_pyfiles()
 
         with CaptureOutput() as output:
-            run(runner, "rename", "--dry", fruit, "fruity")
-            assert output.getvalue()
+            run(runner, "rename", "--dry-run", fruit, "fruity")
+            assert "Renaming" in output.getvalue()
 
         with CaptureOutput() as output:
-            run(runner, "rename", "--dry", f"{fruit}::cherries", "berries")
-            assert output.getvalue()
+            run(runner, "rename", "--dry-run", f"{fruit}::cherries", "berries")
+            assert "Renaming" in output.getvalue()
 
         assert not pathlib.Path("fruity.py").exists()
         assert "berries" not in fruit.read_text()
