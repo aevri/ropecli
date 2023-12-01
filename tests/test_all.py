@@ -142,11 +142,11 @@ def test_rename_module__dry():
 
         with CaptureOutput() as output:
             run(runner, "rename", "--dry-run", fruit, "fruity")
-            assert output.getvalue()
+            assert "Renaming" in output.getvalue()
 
         with CaptureOutput() as output:
             run(runner, "rename", "--dry-run", f"{fruit}::cherries", "berries")
-            assert output.getvalue()
+            assert "Renaming" in output.getvalue()
 
         assert not pathlib.Path("fruity.py").exists()
         assert "berries" not in fruit.read_text()
