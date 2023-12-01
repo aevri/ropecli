@@ -4,6 +4,19 @@ import click.testing
 
 import ropecli
 
+import io
+import sys
+
+
+class CaptureOutput:
+    def __enter__(self):
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        return captured_output
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdout = sys.__stdout__
+
 
 VEGETABLES_PY = """
 from sys import stderr
@@ -120,6 +133,23 @@ def test_rename_module():
         assert "fruity.tomatoes()" in veg.read_text()
         assert not fruit.exists()
         assert pathlib.Path("fruity.py").exists()
+
+
+def test_rename_module__dry():
+    runner = click.testing.CliRunner()
+    with runner.isolated_filesystem():
+        veg, fruit = make_veg_fruit_pyfiles()
+
+        with CaptureOutput() as output:
+            run(runner, "rename", "--dry", fruit, "fruity")
+            assert output.getvalue()
+
+        with CaptureOutput() as output:
+            run(runner, "rename", "--dry", f"{fruit}::cherries", "berries")
+            assert output.getvalue()
+
+        assert not pathlib.Path("fruity.py").exists()
+        assert "berries" not in fruit.read_text()
 
 
 # -----------------------------------------------------------------------------
